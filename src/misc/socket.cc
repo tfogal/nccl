@@ -644,7 +644,6 @@ ncclResult_t ncclSocketConnect(struct ncclSocket* sock) {
 
 ncclResult_t ncclSocketAccept(struct ncclSocket* sock, struct ncclSocket* listenSock) {
   ncclResult_t ret = ncclSuccess;
-  errno = 0;
 
   if (listenSock == NULL || sock == NULL) {
     WARN("ncclSocketAccept: pass NULL socket");
@@ -673,7 +672,10 @@ ncclResult_t ncclSocketAccept(struct ncclSocket* sock, struct ncclSocket* listen
       (sock->state == ncclSocketStateAccepting ||
        sock->state == ncclSocketStateAccepted));
 
-  if (sock->abortFlag && __atomic_load_n(sock->abortFlag, __ATOMIC_ACQUIRE)) return ncclInternalError;
+  if (sock->abortFlag && __atomic_load_n(sock->abortFlag, __ATOMIC_ACQUIRE)) {
+    WARN("ncclSocketAccept: abort flag set");
+    return ncclInternalError;
+  }
 
   switch (sock->state) {
     case ncclSocketStateAccepting:
@@ -723,6 +725,7 @@ ncclResult_t ncclSocketInit(struct ncclSocket* sock, union ncclSocketAddress* ad
     sock->salen = (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
 
     /* Connect to a hostname / port */
+    errno = 0;
     sock->fd = socket(family, SOCK_STREAM, 0);
     if (sock->fd == -1) {
       WARN("ncclSocketInit: Socket creation failed : %s", strerror(errno));

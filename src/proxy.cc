@@ -1442,6 +1442,7 @@ void* ncclProxyService(void* _args) {
       WARN("[Proxy Service] Poll failed: %s", strerror(errno));
       return NULL;
     }
+    errno = 0;
     if (pollfds[NCCL_MAX_LOCAL_RANKS].revents) {
       int s = 0;
       while (s < NCCL_MAX_LOCAL_RANKS && pollfds[s].fd >= 0) s++;
@@ -1454,7 +1455,6 @@ void* ncclProxyService(void* _args) {
         WARN("[Service thread] Initialize peers[%d].sock fails", s);
         return NULL;
       }
-      errno = 0;
       const ncclResult_t acc = ncclSocketAccept(&peers[s].sock, proxyState->listenSock);
       if (acc != ncclSuccess) {
         // This can happen in a race between poll(2) and accept(2): the poll
