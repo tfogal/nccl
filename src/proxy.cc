@@ -1455,6 +1455,12 @@ void* ncclProxyService(void* _args) {
         return NULL;
       }
       if (ncclSocketAccept(&peers[s].sock, proxyState->listenSock) != ncclSuccess) {
+        // This can happen in a race between poll(2) and accept(2): the poll
+        // reports that somebody is waiting to connect but they have
+        // disconnected by the time we get to accept.
+        if(errno == EAGAIN || errno == EWOULDBLOCK) {
+            continue;
+        }
         WARN("[Service thread] Accept failed %s", strerror(errno));
       } else {
         if (ncclSocketGetFd(&peers[s].sock, &pollfds[s].fd) != ncclSuccess) {

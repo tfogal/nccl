@@ -4,6 +4,7 @@
  * See LICENSE.txt for license information
  ************************************************************************/
 
+#include <errno.h>
 #include "socket.h"
 #include "utils.h"
 #include <stdlib.h>
@@ -643,6 +644,7 @@ ncclResult_t ncclSocketConnect(struct ncclSocket* sock) {
 
 ncclResult_t ncclSocketAccept(struct ncclSocket* sock, struct ncclSocket* listenSock) {
   ncclResult_t ret = ncclSuccess;
+  errno = 0;
 
   if (listenSock == NULL || sock == NULL) {
     WARN("ncclSocketAccept: pass NULL socket");
